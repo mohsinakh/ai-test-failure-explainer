@@ -1,0 +1,145 @@
+{
+  "module": "Login",
+  "generated_by": "Claude (Sonnet 5), refined from ChatGPT first drafts - see prompts.md",
+  "test_cases": [
+    {
+      "id": "LOGIN-01",
+      "title": "Valid login redirects to dashboard/inventory",
+      "type": "positive",
+      "priority": "P0",
+      "preconditions": "User account exists and is active",
+      "steps": [
+        "Navigate to the login page",
+        "Enter a valid username",
+        "Enter the matching valid password",
+        "Click Login"
+      ],
+      "expected_result": "User is redirected to the dashboard/inventory page within 2s; session cookie/token is set",
+      "automated_by": "tests/login/test_login.py::test_valid_login_redirects_to_inventory"
+    },
+    {
+      "id": "LOGIN-02",
+      "title": "Login with incorrect password is rejected",
+      "type": "negative",
+      "priority": "P0",
+      "steps": [
+        "Navigate to the login page",
+        "Enter a valid username",
+        "Enter an incorrect password",
+        "Click Login"
+      ],
+      "expected_result": "Login is rejected; a generic 'invalid credentials' error is shown (no hint as to whether username or password was wrong); user remains on login page",
+      "automated_by": "tests/login/test_login.py::test_invalid_credentials_shows_error[wrong-password]"
+    },
+    {
+      "id": "LOGIN-03",
+      "title": "Login with unregistered username is rejected",
+      "type": "negative",
+      "priority": "P0",
+      "steps": [
+        "Navigate to the login page",
+        "Enter a username that has no matching account",
+        "Enter any password",
+        "Click Login"
+      ],
+      "expected_result": "Same generic error as LOGIN-02 - error message must not leak whether the username exists",
+      "automated_by": "tests/login/test_login.py::test_invalid_credentials_shows_error[wrong-username]"
+    },
+    {
+      "id": "LOGIN-04",
+      "title": "Login blocked with blank username and/or password",
+      "type": "negative",
+      "priority": "P1",
+      "steps": [
+        "Navigate to the login page",
+        "Leave username and/or password blank",
+        "Click Login"
+      ],
+      "expected_result": "Client- or server-side validation blocks submission with a field-level or generic error; no request is sent with empty required fields (or if sent, server returns 4xx)",
+      "automated_by": "tests/login/test_login.py::test_invalid_credentials_shows_error[blank-username|blank-password|blank-both]"
+    },
+    {
+      "id": "LOGIN-05",
+      "title": "Forgot password sends a reset link",
+      "type": "positive",
+      "priority": "P1",
+      "steps": [
+        "Navigate to the login page",
+        "Click 'Forgot your password?'",
+        "Enter a registered email address",
+        "Submit"
+      ],
+      "expected_result": "A confirmation message is shown ('check your email...'); a reset email is sent (or reset link is generated) without revealing whether the email is registered",
+      "automated_by": null,
+      "note": "Not automatable against the current demo target (no forgot-password flow). Written to spec; see prompts.md Login notes."
+    },
+    {
+      "id": "LOGIN-06",
+      "title": "Forgot password with unregistered email does not leak account existence",
+      "type": "negative",
+      "priority": "P2",
+      "steps": [
+        "Navigate to the forgot-password page",
+        "Enter an email with no matching account",
+        "Submit"
+      ],
+      "expected_result": "Same generic confirmation message as LOGIN-05 is shown regardless of whether the account exists",
+      "automated_by": null,
+      "note": "Not automatable against the current demo target."
+    },
+    {
+      "id": "LOGIN-07",
+      "title": "Session expires after logout; protected pages are no longer reachable",
+      "type": "negative",
+      "priority": "P0",
+      "steps": [
+        "Log in successfully",
+        "Log out via the nav menu",
+        "Attempt to navigate directly to a protected URL (e.g. /dashboard)"
+      ],
+      "expected_result": "User is redirected to the login page; no protected content is rendered even momentarily",
+      "automated_by": "tests/login/test_login.py::test_logout_ends_session"
+    },
+    {
+      "id": "LOGIN-08",
+      "title": "Idle session expires after the configured timeout",
+      "type": "negative",
+      "priority": "P2",
+      "steps": [
+        "Log in successfully",
+        "Leave the session idle for longer than the configured session-timeout window",
+        "Attempt an action that requires an authenticated session"
+      ],
+      "expected_result": "The stale session is rejected; user is prompted to log in again",
+      "automated_by": null,
+      "note": "Requires either a configurable short timeout in a test environment or time-travel/mocking of server clock; not automatable against the public demo target as written. Flagged for a config change in TestMu's staging env."
+    },
+    {
+      "id": "LOGIN-09",
+      "title": "Account is locked after N consecutive failed login attempts",
+      "type": "negative",
+      "priority": "P0",
+      "steps": [
+        "Attempt to log in with a valid username and an incorrect password N times in a row (N = configured lockout threshold)",
+        "Attempt one more login, this time with the correct password"
+      ],
+      "expected_result": "Account is locked after the Nth failed attempt; the correct-password attempt on the (N+1)th try is still rejected with a lockout-specific message",
+      "automated_by": "tests/login/test_login.py::test_locked_out_account_is_rejected",
+      "note": "Automated against SauceDemo's pre-locked 'locked_out_user' fixture, which validates lockout *enforcement* but not the attempt-counting trigger itself, since the demo app has no live counter to drive. The counting behavior needs testing against TestMu's real endpoint."
+    },
+    {
+      "id": "LOGIN-10",
+      "title": "Lockout clears after the configured cooldown period",
+      "type": "positive",
+      "priority": "P2",
+      "steps": [
+        "Trigger a lockout per LOGIN-09",
+        "Wait for the configured cooldown period to elapse",
+        "Log in with correct credentials"
+      ],
+      "expected_result": "Login succeeds once the cooldown has elapsed",
+      "automated_by": null,
+      "note": "Not automatable against the demo target (fixed lockout, no cooldown). Written to spec."
+    }
+  ]
+}

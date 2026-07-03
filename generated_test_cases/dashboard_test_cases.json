@@ -1,0 +1,110 @@
+{
+  "module": "Dashboard",
+  "generated_by": "Claude (Sonnet 5), refined from ChatGPT first drafts - see prompts.md",
+  "test_cases": [
+    {
+      "id": "DASH-01",
+      "title": "All dashboard widgets load with content on first paint",
+      "type": "positive",
+      "priority": "P0",
+      "steps": [
+        "Log in with a standard account",
+        "Land on the dashboard"
+      ],
+      "expected_result": "Every expected widget is present and rendered with non-empty content within the page load budget (no widget stuck in a perpetual loading/skeleton state)",
+      "automated_by": "tests/dashboard/test_dashboard.py::test_widgets_load_with_content"
+    },
+    {
+      "id": "DASH-02",
+      "title": "Widget data matches the underlying source data (data accuracy)",
+      "type": "positive",
+      "priority": "P0",
+      "steps": [
+        "Log in with a standard account",
+        "Read the values displayed in a data widget (e.g. price, count)",
+        "Compare against the known/expected values for that fixture data"
+      ],
+      "expected_result": "Displayed values are correct and correctly formatted (e.g. currency, no NaN/undefined, no stale cached values)",
+      "automated_by": "tests/dashboard/test_dashboard.py::test_prices_are_valid_currency_values"
+    },
+    {
+      "id": "DASH-03",
+      "title": "Sort control reorders widgets low-to-high / high-to-low",
+      "type": "positive",
+      "priority": "P1",
+      "steps": [
+        "Log in with a standard account",
+        "Apply the 'price: low to high' sort",
+        "Read the resulting order"
+      ],
+      "expected_result": "Displayed order is numerically ascending by price",
+      "automated_by": "tests/dashboard/test_dashboard.py::test_sort_low_to_high"
+    },
+    {
+      "id": "DASH-04",
+      "title": "Sort control reorders widgets alphabetically Z-A",
+      "type": "positive",
+      "priority": "P2",
+      "steps": [
+        "Log in with a standard account",
+        "Apply the 'name: Z to A' sort",
+        "Read the resulting order"
+      ],
+      "expected_result": "Displayed order is reverse-alphabetical",
+      "automated_by": "tests/dashboard/test_dashboard.py::test_sort_za"
+    },
+    {
+      "id": "DASH-05",
+      "title": "Filter control narrows widgets to the selected criteria",
+      "type": "positive",
+      "priority": "P1",
+      "steps": [
+        "Log in with a standard account",
+        "Apply a filter (e.g. category = 'active')",
+        "Read the resulting widget set"
+      ],
+      "expected_result": "Only widgets matching the filter are shown; count updates accordingly; clearing the filter restores the full set",
+      "automated_by": null,
+      "note": "SauceDemo's inventory page has sort but no category/status filter control. Written to spec for TestMu's real Dashboard filter UI."
+    },
+    {
+      "id": "DASH-06",
+      "title": "Dashboard layout adapts to a mobile viewport without broken/overlapping elements",
+      "type": "positive",
+      "priority": "P1",
+      "steps": [
+        "Log in with a standard account",
+        "Resize/emulate a mobile viewport (e.g. 375x812)",
+        "Inspect the rendered layout"
+      ],
+      "expected_result": "Navigation collapses to a mobile-appropriate pattern (e.g. hamburger menu); widgets stack legibly; no horizontal scroll or overlapping content",
+      "automated_by": "tests/dashboard/test_dashboard.py::test_layout_adapts_to_mobile_viewport"
+    },
+    {
+      "id": "DASH-07",
+      "title": "Users without permission cannot see restricted widgets",
+      "type": "negative",
+      "priority": "P0",
+      "steps": [
+        "Log in as a user with a restricted role (e.g. 'viewer')",
+        "Land on the dashboard"
+      ],
+      "expected_result": "Widgets gated to higher-privilege roles (e.g. admin controls, financial summaries) are not present in the DOM - not just visually hidden - for the restricted role",
+      "automated_by": null,
+      "note": "SauceDemo has no real role/permission system. Written to spec; deliberately asserts the widget is absent from the DOM, not just CSS-hidden, since a hidden-but-present admin widget is itself a data-exposure bug."
+    },
+    {
+      "id": "DASH-08",
+      "title": "A degraded/broken widget render is detectable, not silently passed",
+      "type": "negative",
+      "priority": "P1",
+      "steps": [
+        "Log in as a user known to trigger a rendering bug (e.g. broken image assets)",
+        "Inspect the widgets for the known defect"
+      ],
+      "expected_result": "The regression suite actively flags the known broken-rendering condition rather than passing because it only checked for widget presence, not widget correctness",
+      "automated_by": "tests/dashboard/test_dashboard.py::test_problem_user_sees_broken_images",
+      "note": "Used as a sanity check that our 'widget loaded' assertions aren't so loose they'd pass on a visibly broken dashboard."
+    }
+  ]
+}

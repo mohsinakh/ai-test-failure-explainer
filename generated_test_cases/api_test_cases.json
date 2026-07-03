@@ -1,0 +1,166 @@
+{
+  "module": "REST API",
+  "generated_by": "Claude (Sonnet 5), refined from ChatGPT first drafts - see prompts.md",
+  "test_cases": [
+    {
+      "id": "API-01",
+      "title": "Login with valid credentials returns a usable auth token",
+      "type": "positive",
+      "priority": "P0",
+      "steps": [
+        "POST /auth/login with a valid username/password"
+      ],
+      "expected_result": "200 response; body includes a non-empty access token and matches the requesting user's identity",
+      "automated_by": "tests/api/test_api.py::TestAuth::test_login_with_valid_credentials_returns_token"
+    },
+    {
+      "id": "API-02",
+      "title": "Login with invalid password is rejected",
+      "type": "negative",
+      "priority": "P0",
+      "steps": [
+        "POST /auth/login with a valid username and an incorrect password"
+      ],
+      "expected_result": "4xx response; no token issued",
+      "automated_by": "tests/api/test_api.py::TestAuth::test_login_with_invalid_password_is_rejected"
+    },
+    {
+      "id": "API-03",
+      "title": "Protected endpoint rejects requests with no token",
+      "type": "negative",
+      "priority": "P0",
+      "steps": [
+        "GET a protected/authenticated endpoint with no Authorization header"
+      ],
+      "expected_result": "401 Unauthorized",
+      "automated_by": "tests/api/test_api.py::TestAuth::test_protected_endpoint_requires_token"
+    },
+    {
+      "id": "API-04",
+      "title": "Protected endpoint accepts a valid token",
+      "type": "positive",
+      "priority": "P0",
+      "steps": [
+        "Log in to obtain a token",
+        "GET a protected endpoint with 'Authorization: Bearer <token>'"
+      ],
+      "expected_result": "200 response; returned data matches the authenticated user",
+      "automated_by": "tests/api/test_api.py::TestAuth::test_protected_endpoint_accepts_valid_token"
+    },
+    {
+      "id": "API-05",
+      "title": "Create resource (POST) returns the created object with an id",
+      "type": "positive",
+      "priority": "P0",
+      "steps": [
+        "POST a new resource with valid fields"
+      ],
+      "expected_result": "201 response; body echoes submitted fields and includes a new id",
+      "automated_by": "tests/api/test_api.py::TestProductCRUD::test_create_product"
+    },
+    {
+      "id": "API-06",
+      "title": "Read resource (GET by id) returns the correct object",
+      "type": "positive",
+      "priority": "P0",
+      "steps": [
+        "GET a resource by a known valid id"
+      ],
+      "expected_result": "200 response; returned id matches requested id",
+      "automated_by": "tests/api/test_api.py::TestProductCRUD::test_read_single_product"
+    },
+    {
+      "id": "API-07",
+      "title": "Update resource (PUT) persists and returns the change",
+      "type": "positive",
+      "priority": "P0",
+      "steps": [
+        "PUT an existing resource with an updated field"
+      ],
+      "expected_result": "200 response; returned object reflects the updated field",
+      "automated_by": "tests/api/test_api.py::TestProductCRUD::test_update_product",
+      "note": "Against a fake backend (see README), 'persists' is only verified via the response contract, not a follow-up GET, since writes aren't actually stored."
+    },
+    {
+      "id": "API-08",
+      "title": "Delete resource (DELETE) removes it",
+      "type": "positive",
+      "priority": "P0",
+      "steps": [
+        "DELETE an existing resource by id"
+      ],
+      "expected_result": "200/204 response; a subsequent GET for that id returns 404",
+      "automated_by": "tests/api/test_api.py::TestProductCRUD::test_delete_product",
+      "note": "Follow-up-GET-returns-404 half of this case isn't checkable against a fake backend that doesn't persist deletes; the delete-response-contract half is."
+    },
+    {
+      "id": "API-09",
+      "title": "GET a nonexistent resource returns 404",
+      "type": "negative",
+      "priority": "P0",
+      "steps": [
+        "GET a resource id that does not exist"
+      ],
+      "expected_result": "404 Not Found with an informative error body",
+      "automated_by": "tests/api/test_api.py::TestErrorHandling::test_get_nonexistent_product_returns_404"
+    },
+    {
+      "id": "API-10",
+      "title": "Malformed request body returns 4xx, not 5xx",
+      "type": "negative",
+      "priority": "P0",
+      "steps": [
+        "POST /auth/login with a non-JSON body and Content-Type: application/json"
+      ],
+      "expected_result": "4xx response; server does not crash or return a raw 500/stack trace",
+      "automated_by": "tests/api/test_api.py::TestErrorHandling::test_malformed_login_body_returns_4xx"
+    },
+    {
+      "id": "API-11",
+      "title": "Missing required field returns 4xx with a field-specific error",
+      "type": "negative",
+      "priority": "P1",
+      "steps": [
+        "POST /auth/login with the password field omitted"
+      ],
+      "expected_result": "4xx response; error body indicates which field is missing/invalid",
+      "automated_by": "tests/api/test_api.py::TestErrorHandling::test_missing_required_field_on_login_returns_4xx"
+    },
+    {
+      "id": "API-12",
+      "title": "List endpoint enforces rate limiting under burst traffic",
+      "type": "negative",
+      "priority": "P2",
+      "steps": [
+        "Send N requests to the same endpoint in rapid succession"
+      ],
+      "expected_result": "Once the rate limit threshold is crossed, the API returns 429 with a Retry-After header rather than degrading, hanging, or 500ing",
+      "automated_by": "tests/api/test_api.py::TestRateLimiting::test_burst_of_requests_completes_without_crashing",
+      "note": "The demo API doesn't enforce a documented rate limit, so this only asserts 'fails safely' rather than a real 429+Retry-After contract. See prompts.md API notes and README known limitations."
+    },
+    {
+      "id": "API-13",
+      "title": "Response schema matches the documented contract",
+      "type": "positive",
+      "priority": "P0",
+      "steps": [
+        "GET a list endpoint",
+        "Validate each item against the required field set and types"
+      ],
+      "expected_result": "Every item has all required fields with the correct types; no field is silently null where a value is expected",
+      "automated_by": "tests/api/test_api.py::TestSchemaValidation::test_product_list_items_match_expected_schema"
+    },
+    {
+      "id": "API-14",
+      "title": "Auth response schema includes all fields the client depends on",
+      "type": "positive",
+      "priority": "P0",
+      "steps": [
+        "Log in successfully",
+        "Validate the response body's shape"
+      ],
+      "expected_result": "Response includes id, username, email, accessToken, and refreshToken",
+      "automated_by": "tests/api/test_api.py::TestSchemaValidation::test_login_response_matches_expected_schema"
+    }
+  ]
+}

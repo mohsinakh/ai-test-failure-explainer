@@ -1,0 +1,15 @@
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+httpx==0.27.2
+pydantic==2.10.3
+python-dotenv==1.0.1
+requests
+pytest
+playwright
+pytest-html
+pytest-playwright>=0.5.2
+pytest-base-url>=2.1.0   # dependency of pytest-playwright; pinned explicitly for reproducibility
+
+
+# Loads ANTHROPIC_API_KEY / OLLAMA_HOST / OLLAMA_MODEL etc. from a .env file
+python-dotenv>=1.0
