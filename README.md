@@ -1,4 +1,4 @@
-# TestMu SDET-1 Submission
+# ai-test-failure-explainer
 
 AI-native regression suite for Login, Dashboard, and REST API, plus a real
 LLM integration that explains test failures in plain English.
